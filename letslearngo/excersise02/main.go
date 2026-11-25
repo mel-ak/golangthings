@@ -46,7 +46,7 @@ func main() {
 			Title:     "Designing Data-Intensive Applications",
 			Author:    "Martin Kleppmann",
 			Pages:     616,
-			Available: false,
+			Available: true,
 		},
 		{
 			Title:     "The Go Programming Language",
@@ -56,32 +56,111 @@ func main() {
 		},
 	}
 
-	// borroewdBy := map[string]string{} // title -> borrower name
+	borrowedBy := map[string]string{} // title -> borrower name
 
-	printLibrary(books)
-	fmt.Println(findBook(books, "The Pragmatic Programmer"))
+	borrower1 := "Melak"
+	borrower2 := "Bob"
+	sampleBook := "Clean Code"
+
+	fmt.Println("LIBRARY :\n")
+	printLibrary(books, borrowedBy)
+
+	fmt.Printf("\n\nBORROW : (%s - %s)\n", borrower1, sampleBook)
+	err := borrowBook(books, borrowedBy, sampleBook, borrower1)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println("Book borrowed successfully")
+	}
+
+	err = borrowBook(books, borrowedBy, sampleBook, borrower2)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println("Book borrowed successfully")
+	}
+
+	fmt.Println("LIBRARY :\n")
+	printLibrary(books, borrowedBy)
+
+	err = returnBook(books, borrowedBy, sampleBook)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println("Book returned successfully")
+	}
+
+	err = returnBook(books, borrowedBy, sampleBook)
+	if err != nil {
+		fmt.Println(err)
+	} else {
+		fmt.Println("Book returned successfully")
+	}
+
+	fmt.Println("LIBRARY :\n")
+	printLibrary(books, borrowedBy)
+	// fmt.Println("\n\nSearching Book ...", sampleBook, "...")
+	// fmt.Println(findBook(books, "The Pragmatic Programmer"))
 
 }
 
 func findBook(books []Book, title string) *Book {
-	for _, book := range books {
+	for i, book := range books {
 		if book.Title == title {
-			return &book
+			return &books[i]
 		}
 	}
 	return nil
 }
 
-func borrowBook() {
+func borrowBook(books []Book, borrowedBy map[string]string, title, person string) error {
+
+	book := findBook(books, title)
+
+	if book == nil {
+		return fmt.Errorf("book %q not found", title)
+	}
+
+	if book.Available == false {
+		return fmt.Errorf("%q is already borrowed", title)
+	}
+
+	if !book.Borrow() {
+		return fmt.Errorf("Error borrowing")
+	}
+	borrowedBy[title] = person
+
+	return nil
+
 
 }
 
-func returnBook() {
+func returnBook(books []Book, borrowedBy map[string]string, title string) error {
 
+	book := findBook(books, title)
+	if book == nil {
+		return fmt.Errorf("book %q not found", title)
+	}
+
+	if borrowedBy[title] == "" {
+		return fmt.Errorf("%q was not borrowed", title)
+	}
+
+	book.Return()
+
+	delete(borrowedBy, title)
+
+	return nil
 }
 
-func printLibrary(books []Book) {
+func printLibrary(books []Book, borrowedBy map[string]string) {
 	for _, book := range books {
-		fmt.Println(book.Summary())
+		state := ""
+		if book.Available {
+			state = "available"
+		} else {
+			state = "borrowed by " + borrowedBy[book.Title]
+		}
+		fmt.Println(book.Summary(), "-", state)
 	}
 }
